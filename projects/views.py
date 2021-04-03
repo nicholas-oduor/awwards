@@ -81,3 +81,39 @@ class ProjectsDescription(APIView):
         project.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+class ProfileList(APIView):
+    def get(self, request, format=None):
+        all_merch = Profile.objects.all()
+        serializers = ProfileSerializer(all_merch, many=True)
+        return Response(serializers.data)
+    
+@login_required(login_url='/accounts/login/')
+def search_projects(request):
+    if 'keyword' in request.GET and request.GET["keyword"]:
+        search_term = request.GET.get("keyword")
+        searched_projects = Projects.search_projects(search_term)
+        message = f"{search_term}"
+
+        return render(request, 'search.html', {"message":message,"projects": searched_projects})
+
+    else:
+        message = "You haven't searched for any term"
+        return render(request, 'search.html', {"message": message})
+    
+@login_required(login_url='/accounts/login/')
+def user_profiles(request):
+    current_user = request.user
+    author = current_user
+    projects = Projects.get_by_author(author)
+    
+    if request.method == 'POST':
+        form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.photo)
+        if form.is_valid():
+            profile = form.save(commit=False)
+            profile.save()
+        return redirect('profile')
+        
+    else:
+        form = ProfileUpdateForm()    
+    return render(request, 'django_registration/profile.html', {"form":form, "projects":projects})
+
