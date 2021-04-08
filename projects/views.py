@@ -107,13 +107,13 @@ def user_profiles(request):
     projects = Projects.get_by_author(author)
     
     if request.method == 'POST':
-        form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.photo)
+        form = ProfileUpdateForm(request.POST, request.FILES)
         if form.is_valid():
             profile = form.save(commit=False)
+            profile.user = current_user
             profile.save()
         return redirect('profile')
         
     else:
         form = ProfileUpdateForm()    
     return render(request, 'django_registration/profile.html', {"form":form, "projects":projects})
-
